@@ -6,24 +6,22 @@ AddEventHandler('playerConnecting', function(_, _, deferrals)
     })
 end)
 
+-- ESX SharedObject (méthode moderne uniquement)
 local ESX = nil
-TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-
-if not ESX then
-    pcall(function()
-        ESX = exports["es_extended"]:getSharedObject()
-    end)
-end
+pcall(function()
+    ESX = exports["es_extended"]:getSharedObject()
+end)
 
 if ESX then
     ESX.RegisterCommand('testload', 'admin', function(xPlayer, args, showError)
         xPlayer.triggerEvent('esx_loadingscreen:showTest')
     end, false, {help = "Tester l'écran de chargement"})
 else
-    -- Fallback commande native ace permission si ESX n'est pas prêt ou absent
+    -- Fallback commande native ACE si ESX absent
     RegisterCommand('testload', function(source, args, rawCommand)
         if source > 0 then
-            if IsPlayerAceAllowed(source, "command.testload") or IsPlayerAceAllowed(source, "command") then
+            -- Permission spécifique uniquement (évite d'autoriser tous les "command")
+            if IsPlayerAceAllowed(source, "command.testload") then
                 TriggerClientEvent('esx_loadingscreen:showTest', source)
             else
                 print("Permission refusée pour " .. GetPlayerName(source))

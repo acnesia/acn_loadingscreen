@@ -10,28 +10,24 @@
 // ===============================================
 const CONFIG = typeof LOADING_CONFIG !== 'undefined' ? LOADING_CONFIG : {
     server: {
-        name: "Acnesia RP",
+        name: "Mon Serveur RP",
         logo: "logo/logo.png",
-        discordUrl: "https://discord.gg/QYhRz2WV8Y",
-        youtubeUrl: "https://www.youtube.com/@thanatos2784",
-        websiteUrl: "https://www.google.com/",
+        discordUrl: "#",
+        youtubeUrl: "#",
+        websiteUrl: "#",
         useVideoBackground: false,
-        videoBackground: "https://www.youtube.com/embed/iAXzw0I3Ncg",
+        videoBackground: "",
         imageBackground: "img/background.png"
     },
     songs: [
-        { file: 'song/song1.mp3', name: 'Asketa & Natan Chaim - More [NCS Release]' },
-        { file: 'song/song2.mp3', name: 'Akacia - Electric [NCS Release]' },
-        { file: 'song/song3.mp3', name: 'Wiguez & Vizzen - Running Wild [NCS Release]' }
+        { file: 'song/song1.mp3', name: 'Song 1' },
+        { file: 'song/song2.mp3', name: 'Song 2' },
+        { file: 'song/song3.mp3', name: 'Song 3' }
     ],
     welcomePhrases: [
         'Commencez votre nouvelle aventure passionnante.',
         'Découvrez les merveilles de votre nouvelle ville.',
-        'Ouvrez la porte à un tout nouveau chapitre.',
-        'Entrez dans un monde de nouvelles possibilités.',
-        'Embrassez votre nouveau début.',
-        'Votre histoire commence ici.',
-        'Préparez-vous à vivre des moments inoubliables.'
+        'Votre histoire commence ici.'
     ],
     news: { items: [] },
     serverInfo: { items: [] },
@@ -57,21 +53,16 @@ let state = {
 // ===============================================
 const elements = {
     audio: null,
-    // Main UI Player Elements
     songName: null,
     muteText: null,
     playerVisualizer: null,
     progressFill: null,
     statusText: null,
-    
-    // Keybinds UI Player Elements
     keybindsSongName: null,
     keybindsMuteText: null,
     keybindsPlayerVisualizer: null,
     keybindsProgressFill: null,
     keybindsStatusText: null,
-
-    // General Elements
     playerName: null,
     welcomeDisplay: null,
     particles: null,
@@ -94,13 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeParticles();
     initializeKeyboard();
     initializeCategoryFilters();
-    initializeFivemEvents(); // Real loading progress
-
-    // Initialize dynamic content from config
+    initializeFivemEvents();
     initializeNewsCard();
     initializeServerInfoCard();
     initializeTooltips();
     initializeKeyboardControls();
+    initializeStaffCards();
+    initializeSocialButtons();
 });
 
 function initializeElements() {
@@ -108,22 +99,16 @@ function initializeElements() {
     elements.bgContainer = document.getElementById('bgContainer');
     elements.mainContainer = document.querySelector('.main-container');
     elements.keybindsSection = document.getElementById('keybindsSection');
-    
-    // Main player elements
     elements.songName = document.getElementById('songname');
     elements.muteText = document.getElementById('muteText');
     elements.playerVisualizer = document.querySelector('.player-visualizer');
     elements.progressFill = document.getElementById('progressFill');
     elements.statusText = document.getElementById('statusText');
-    
-    // Keybinds player elements
     elements.keybindsSongName = document.getElementById('keybindsSongname');
     elements.keybindsMuteText = document.getElementById('keybindsMuteText');
     elements.keybindsPlayerVisualizer = document.getElementById('keybindsPlayerVisualizer');
     elements.keybindsProgressFill = document.getElementById('keybindsProgressFill');
     elements.keybindsStatusText = document.getElementById('keybindsStatusText');
-
-    // Tooltips & particles
     elements.playerName = document.getElementById('playerName');
     elements.welcomeDisplay = document.getElementById('welcomeDisplay');
     elements.particles = document.getElementById('particles');
@@ -137,13 +122,8 @@ function initializeElements() {
 function loadAudioPreferences() {
     const savedVolume = localStorage.getItem('loading_volume');
     const savedMuted = localStorage.getItem('loading_muted');
-    
-    if (savedVolume !== null) {
-        state.volume = parseFloat(savedVolume);
-    }
-    if (savedMuted !== null) {
-        state.isMuted = (savedMuted === 'true');
-    }
+    if (savedVolume !== null) state.volume = parseFloat(savedVolume);
+    if (savedMuted !== null) state.isMuted = (savedMuted === 'true');
 }
 
 // ===============================================
@@ -156,20 +136,17 @@ function initializeBackground() {
     if (CONFIG.server.useVideoBackground && CONFIG.server.videoBackground) {
         const iframe = document.createElement('iframe');
         iframe.id = 'bgVideo';
-        
-        // Extract video ID for playlist looping fallback
-        let videoId = 'iAXzw0I3Ncg';
+        let videoId = '';
         try {
             const parts = CONFIG.server.videoBackground.split('/');
             videoId = parts[parts.length - 1].split('?')[0];
         } catch (e) {}
-
         iframe.src = `${CONFIG.server.videoBackground}?controls=0&showinfo=0&rel=0&autoplay=1&loop=1&mute=1&vq=hd1080&playlist=${videoId}`;
         iframe.frameBorder = '0';
         iframe.allow = 'autoplay; encrypted-media';
         container.appendChild(iframe);
     } else if (CONFIG.server.imageBackground) {
-        container.style.backgroundImage = `url(${CONFIG.server.imageBackground})`;
+        container.style.backgroundImage = `url(${CSS.escape ? CONFIG.server.imageBackground : CONFIG.server.imageBackground})`;
         container.style.backgroundSize = 'cover';
         container.style.backgroundPosition = 'center';
     }
@@ -180,23 +157,18 @@ function initializeBackground() {
 // ===============================================
 function initializeAudio() {
     if (!elements.audio) return;
-
     const songs = CONFIG.songs || [];
     if (songs.length === 0) return;
 
-    // Set random initial song
     state.currentSongIndex = getRandomInt(0, songs.length - 1);
     setSong(state.currentSongIndex);
-
-    // Apply saved preferences
     elements.audio.volume = state.volume;
+
     if (state.isMuted) {
         elements.audio.pause();
         updateMuteDisplay(true);
     } else {
-        elements.audio.play().catch(() => {
-            console.log('Autoplay blocked, waiting for user interaction');
-        });
+        elements.audio.play().catch(() => {});
         updateMuteDisplay(false);
     }
 }
@@ -205,12 +177,10 @@ function setSong(index) {
     const songs = CONFIG.songs || [];
     const song = songs[index];
     if (!song || !elements.audio) return;
-
     elements.audio.src = song.file;
     updateSongDisplay(song.name);
-
     if (!state.isMuted) {
-        elements.audio.play().catch(console.log);
+        elements.audio.play().catch(() => {});
     }
 }
 
@@ -225,7 +195,6 @@ function updateSongDisplay(name) {
             el.style.transform = 'translateY(0)';
         }, 200);
     };
-
     updateEl(elements.songName);
     updateEl(elements.keybindsSongName);
 }
@@ -244,15 +213,13 @@ function previousSong() {
 
 function toggleMute() {
     if (!elements.audio) return;
-
     state.isMuted = !state.isMuted;
     localStorage.setItem('loading_muted', state.isMuted);
-
     if (state.isMuted) {
         elements.audio.pause();
         updateMuteDisplay(true);
     } else {
-        elements.audio.play().catch(console.log);
+        elements.audio.play().catch(() => {});
         updateMuteDisplay(false);
     }
 }
@@ -277,17 +244,14 @@ function updateMuteDisplay(muted) {
 
 function adjustVolume(delta) {
     if (!elements.audio) return;
-
     state.volume = Math.max(0, Math.min(1, state.volume + delta));
     elements.audio.volume = state.volume;
     localStorage.setItem('loading_volume', state.volume);
-
     showVolumeFeedback();
 }
 
 function showVolumeFeedback() {
     const percentage = Math.round(state.volume * 100);
-
     let indicator = document.querySelector('.volume-indicator');
     if (!indicator) {
         indicator = document.createElement('div');
@@ -311,14 +275,10 @@ function showVolumeFeedback() {
         `;
         document.body.appendChild(indicator);
     }
-
     indicator.textContent = `🔊 ${percentage}%`;
     indicator.style.opacity = '1';
-
-    clearTimeout(indicator.timeout);
-    indicator.timeout = setTimeout(() => {
-        indicator.style.opacity = '0';
-    }, 1000);
+    clearTimeout(indicator._timeout);
+    indicator._timeout = setTimeout(() => { indicator.style.opacity = '0'; }, 1000);
 }
 
 // ===============================================
@@ -327,23 +287,14 @@ function showVolumeFeedback() {
 function initializeWelcome() {
     const phrases = CONFIG.welcomePhrases || [];
     if (phrases.length > 0 && elements.welcomeDisplay) {
-        const randomPhrase = phrases[getRandomInt(0, phrases.length - 1)];
-        elements.welcomeDisplay.textContent = randomPhrase;
+        elements.welcomeDisplay.textContent = phrases[getRandomInt(0, phrases.length - 1)];
     }
-
-    // Get player name from FiveM handover data
     try {
         if (window.nuiHandoverData && window.nuiHandoverData.name) {
-            if (elements.playerName) {
-                elements.playerName.textContent = window.nuiHandoverData.name;
-            }
-            console.log(`Connexion à ${window.nuiHandoverData.serverAddress}`);
+            if (elements.playerName) elements.playerName.textContent = window.nuiHandoverData.name;
         }
     } catch (e) {
-        console.log('FiveM handover data not available');
-        if (elements.playerName) {
-            elements.playerName.textContent = 'Joueur';
-        }
+        if (elements.playerName) elements.playerName.textContent = 'Joueur';
     }
 }
 
@@ -352,11 +303,9 @@ function initializeWelcome() {
 // ===============================================
 function toggleKeybinds(visible) {
     state.isKeybindsVisible = visible;
-    
     if (visible) {
         elements.mainContainer.style.display = 'none';
         elements.keybindsSection.style.display = 'flex';
-        // Force refresh layout animations
         elements.keybindsSection.querySelectorAll('.key').forEach((key, idx) => {
             key.style.animationDelay = `${0.002 * idx}s`;
         });
@@ -365,27 +314,19 @@ function toggleKeybinds(visible) {
         elements.keybindsSection.style.display = 'none';
     }
 }
-
-// Make toggleKeybinds available globally for onclick handlers
 window.toggleKeybinds = toggleKeybinds;
 
 // ===============================================
 // FIVEM REAL LOADING PROGRESS
 // ===============================================
 function initializeFivemEvents() {
-    // Default fallback progress animation if not loaded inside FiveM CEF
     let progress = 0;
+    window.fivemProgressReceived = false;
+
     const progressInterval = setInterval(() => {
-        // If FiveM API triggers progress, we clear this interval
-        if (window.fivemProgressReceived) {
-            clearInterval(progressInterval);
-            return;
-        }
+        if (window.fivemProgressReceived) { clearInterval(progressInterval); return; }
         progress += Math.random() * 2;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(progressInterval);
-        }
+        if (progress >= 100) { progress = 100; clearInterval(progressInterval); }
         updateGlobalProgress(progress);
     }, 450);
 
@@ -397,36 +338,21 @@ function initializeFivemEvents() {
         'ÉTABLISSEMENT DE LA CONNEXION'
     ];
     let currentTextIndex = 0;
-    
     const textInterval = setInterval(() => {
-        if (window.fivemProgressReceived) {
-            clearInterval(textInterval);
-            return;
-        }
+        if (window.fivemProgressReceived) { clearInterval(textInterval); return; }
         currentTextIndex = (currentTextIndex + 1) % defaultTexts.length;
         updateStatusText(defaultTexts[currentTextIndex]);
     }, 4000);
 
-    // FiveM Native CEF Handlers
-    window.fivemProgressReceived = false;
-
     const handlers = {
-        startInitFunction(data) {
-            window.fivemProgressReceived = true;
-        },
-        startInitFunctionType(data) {
-            window.fivemProgressReceived = true;
-        },
+        startInitFunction(data) { window.fivemProgressReceived = true; },
+        startInitFunctionType(data) { window.fivemProgressReceived = true; },
         initFunctionInvoking(data) {
             window.fivemProgressReceived = true;
             updateStatusText(`CHARGEMENT : ${data.name.toUpperCase()}`);
         },
-        initFunctionInvoked(data) {
-            window.fivemProgressReceived = true;
-        },
-        endInitFunctionType(data) {
-            window.fivemProgressReceived = true;
-        },
+        initFunctionInvoked(data) { window.fivemProgressReceived = true; },
+        endInitFunctionType(data) { window.fivemProgressReceived = true; },
         onLogLine(data) {
             window.fivemProgressReceived = true;
             if (data.message && data.message.trim().length > 0) {
@@ -438,6 +364,11 @@ function initializeFivemEvents() {
             if (data.loadFraction !== undefined) {
                 const percentage = data.loadFraction * 100;
                 updateGlobalProgress(percentage);
+                // Arrêt immédiat de l'interval quand chargement terminé
+                if (percentage >= 100) {
+                    clearInterval(progressInterval);
+                    clearInterval(textInterval);
+                }
             }
         }
     };
@@ -446,28 +377,20 @@ function initializeFivemEvents() {
         if (handlers[e.data.eventName]) {
             handlers[e.data.eventName](e.data);
         }
-
-        // In-game testing NUI messages
         if (e.data.action === 'showTest') {
             document.body.style.display = 'block';
             const closeBtn = document.getElementById('closeTestBtn');
             if (closeBtn) closeBtn.style.display = 'block';
-            
-            // Reset state
             updateGlobalProgress(0);
             toggleKeybinds(false);
-            
-            // Play audio
             if (elements.audio) {
-                elements.audio.play().catch(console.log);
+                elements.audio.play().catch(() => {});
                 updateMuteDisplay(false);
             }
         } else if (e.data.action === 'hideTest') {
             document.body.style.display = 'none';
             const closeBtn = document.getElementById('closeTestBtn');
             if (closeBtn) closeBtn.style.display = 'none';
-            
-            // Stop audio
             if (elements.audio) {
                 elements.audio.pause();
                 updateMuteDisplay(true);
@@ -479,38 +402,25 @@ function initializeFivemEvents() {
 function closeTestMode() {
     fetch(`https://${GetParentResourceName()}/closeTest`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=UTF-8'
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({})
     });
 }
 window.closeTestMode = closeTestMode;
 
-// Make sure global function triggers both fills
 function updateGlobalProgress(percentage) {
-    const fillEl = elements.progressFill;
-    const keybindsFillEl = elements.keybindsProgressFill;
-    
-    if (fillEl) fillEl.style.width = `${percentage}%`;
-    if (keybindsFillEl) keybindsFillEl.style.width = `${percentage}%`;
+    if (elements.progressFill) elements.progressFill.style.width = `${percentage}%`;
+    if (elements.keybindsProgressFill) elements.keybindsProgressFill.style.width = `${percentage}%`;
 }
 
 function updateStatusText(text) {
-    const statusEl = elements.statusText;
-    const keybindsStatusEl = elements.keybindsStatusText;
-
     const fadeText = (el) => {
         if (!el) return;
         el.style.opacity = '0';
-        setTimeout(() => {
-            el.textContent = text;
-            el.style.opacity = '1';
-        }, 200);
+        setTimeout(() => { el.textContent = text; el.style.opacity = '1'; }, 200);
     };
-
-    fadeText(statusEl);
-    fadeText(keybindsStatusEl);
+    fadeText(elements.statusText);
+    fadeText(elements.keybindsStatusText);
 }
 
 // ===============================================
@@ -518,22 +428,17 @@ function updateStatusText(text) {
 // ===============================================
 function initializeParticles() {
     if (!elements.particles) return;
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-        createParticle(i);
-    }
+    for (let i = 0; i < PARTICLE_COUNT; i++) createParticle(i);
 }
 
 function createParticle(index) {
     const particle = document.createElement('div');
     particle.className = 'particle';
-
     const size = getRandomInt(2, 6);
     const left = getRandomInt(0, 100);
     const delay = getRandomInt(0, 15);
     const duration = getRandomInt(10, 20);
-    const hue = getRandomInt(220, 280); // Purple/blue range
-
+    const hue = getRandomInt(220, 280);
     particle.style.cssText = `
         left: ${left}%;
         width: ${size}px;
@@ -543,13 +448,18 @@ function createParticle(index) {
         background: hsl(${hue}, 70%, 60%);
         box-shadow: 0 0 ${size * 2}px hsl(${hue}, 70%, 60%);
     `;
-
     elements.particles.appendChild(particle);
 }
 
 // ===============================================
 // NEWS CARD - Dynamic Content
 // ===============================================
+function sanitize(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
 function initializeNewsCard() {
     const newsConfig = CONFIG.news;
     if (!newsConfig) return;
@@ -562,30 +472,22 @@ function initializeNewsCard() {
     if (titleEl && newsConfig.title) titleEl.textContent = newsConfig.title;
     if (dateEl && newsConfig.lastUpdate) dateEl.textContent = `Mise à jour : ${newsConfig.lastUpdate}`;
     if (iconEl && newsConfig.icon) iconEl.textContent = newsConfig.icon;
-
     if (!listEl || !newsConfig.items) return;
 
     listEl.innerHTML = '';
-
     newsConfig.items.forEach((item, index) => {
         const li = document.createElement('li');
         li.className = 'news-item';
         li.dataset.index = index;
         li.dataset.type = 'news';
-
-        const typeClass = `type-${item.type.toLowerCase()}`;
-        li.innerHTML = `
-            <span class="highlight ${typeClass}">${item.type}</span>
-            ${item.text}
-        `;
-
+        // Sanitisation via textContent pour éviter XSS
+        const typeClass = `type-${sanitize(item.type.toLowerCase())}`;
+        li.innerHTML = `<span class="highlight ${typeClass}">${sanitize(item.type)}</span> ${sanitize(item.text)}`;
         li.addEventListener('mouseenter', (e) => showInfoTooltip(e, item, 'news'));
         li.addEventListener('mousemove', (e) => positionTooltip(e, elements.infoTooltip));
         li.addEventListener('mouseleave', () => hideTooltip(elements.infoTooltip));
-
         listEl.appendChild(li);
     });
-
     checkScrollIndicator(listEl, newsConfig.maxVisible || 4);
 }
 
@@ -605,34 +507,26 @@ function initializeServerInfoCard() {
     if (iconEl && infoConfig.icon) iconEl.textContent = infoConfig.icon;
     if (footerEl && infoConfig.footerMessage) {
         footerEl.textContent = infoConfig.footerMessage;
-        if (infoConfig.footerColor) {
-            footerEl.style.color = infoConfig.footerColor;
-        }
+        if (infoConfig.footerColor) footerEl.style.color = infoConfig.footerColor;
     }
-
     if (!listEl || !infoConfig.items) return;
 
     listEl.innerHTML = '';
-
     infoConfig.items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'keybind';
         div.dataset.index = index;
         div.dataset.type = 'info';
-
         div.innerHTML = `
-            ${item.icon ? `<span class="keybind-icon">${item.icon}</span>` : ''}
-            <kbd>${item.key}</kbd>
-            <span>${item.text}</span>
+            ${item.icon ? `<span class="keybind-icon">${sanitize(item.icon)}</span>` : ''}
+            <kbd>${sanitize(item.key)}</kbd>
+            <span>${sanitize(item.text)}</span>
         `;
-
         div.addEventListener('mouseenter', (e) => showInfoTooltip(e, item, 'info'));
         div.addEventListener('mousemove', (e) => positionTooltip(e, elements.infoTooltip));
         div.addEventListener('mouseleave', () => hideTooltip(elements.infoTooltip));
-
         listEl.appendChild(div);
     });
-
     checkScrollIndicator(listEl, infoConfig.maxVisible || 4);
 }
 
@@ -640,9 +534,7 @@ function initializeServerInfoCard() {
 // SCROLL INDICATOR
 // ===============================================
 function checkScrollIndicator(listEl, maxVisible) {
-    const itemCount = listEl.children.length;
-
-    if (itemCount > maxVisible) {
+    if (listEl.children.length > maxVisible) {
         const indicator = document.createElement('div');
         indicator.className = 'scroll-indicator visible';
         indicator.innerHTML = `
@@ -651,9 +543,7 @@ function checkScrollIndicator(listEl, maxVisible) {
             </svg>
             <span>Défiler pour voir plus</span>
         `;
-
         listEl.parentElement.appendChild(indicator);
-
         listEl.addEventListener('scroll', () => {
             const isAtBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 10;
             indicator.classList.toggle('visible', !isAtBottom);
@@ -671,16 +561,12 @@ function initializeKeyboard() {
     keys.forEach(keyElement => {
         const keyId = keyElement.dataset.key;
         const keyConfig = keybindsConfig.find(k => k.key === keyId);
-
         if (keyConfig) {
-            keyElement.classList.add('has-action');
-            keyElement.classList.add(`category-${keyConfig.category}`);
-
+            keyElement.classList.add('has-action', `category-${keyConfig.category}`);
             keyElement.dataset.name = keyConfig.name;
             keyElement.dataset.description = keyConfig.description;
             keyElement.dataset.category = keyConfig.category;
             keyElement.dataset.icon = keyConfig.icon || '🎮';
-
             keyElement.addEventListener('mouseenter', handleKeyHover);
             keyElement.addEventListener('mouseleave', handleKeyLeave);
             keyElement.addEventListener('mousemove', handleKeyMove);
@@ -691,15 +577,13 @@ function initializeKeyboard() {
 function handleKeyHover(event) {
     const key = event.currentTarget;
     if (!key.classList.contains('has-action')) return;
-
     showKeyTooltip(event, key);
     key.classList.add('active');
 }
 
 function handleKeyLeave(event) {
-    const key = event.currentTarget;
     hideTooltip(elements.keyTooltip);
-    key.classList.remove('active');
+    event.currentTarget.classList.remove('active');
 }
 
 function handleKeyMove(event) {
@@ -732,7 +616,6 @@ function showInfoTooltip(event, item, type) {
         dateInfo.textContent = item.date || '';
         title.textContent = item.text;
         description.textContent = item.description || 'Pas de description disponible.';
-
         if (item.author) {
             footer.style.display = 'flex';
             author.textContent = item.author;
@@ -747,7 +630,6 @@ function showInfoTooltip(event, item, type) {
         description.textContent = item.description || 'Pas de description disponible.';
         footer.style.display = 'none';
     }
-
     positionTooltip(event, tooltip);
     tooltip.classList.add('visible');
 }
@@ -755,48 +637,32 @@ function showInfoTooltip(event, item, type) {
 function showKeyTooltip(event, key) {
     const tooltip = elements.keyTooltip;
     if (!tooltip) return;
-
     const categories = CONFIG.keybinds && CONFIG.keybinds.categories ? CONFIG.keybinds.categories : [];
     const category = categories.find(c => c.id === key.dataset.category);
-
     document.getElementById('keyTooltipIcon').textContent = key.dataset.icon;
     document.getElementById('keyTooltipName').textContent = key.dataset.name;
     document.getElementById('keyTooltipDesc').textContent = key.dataset.description;
-
     const categoryEl = document.getElementById('keyTooltipCategory');
     categoryEl.textContent = `${category?.icon || ''} ${category?.name || key.dataset.category}`;
     categoryEl.style.background = category?.color || 'var(--primary)';
-
     positionTooltip(event, tooltip);
     tooltip.classList.add('visible');
 }
 
 function hideTooltip(tooltip) {
-    if (tooltip) {
-        tooltip.classList.remove('visible');
-    }
+    if (tooltip) tooltip.classList.remove('visible');
 }
 
 function positionTooltip(event, tooltip) {
     if (!tooltip) return;
-
     const padding = 15;
     const tooltipRect = tooltip.getBoundingClientRect();
-
     let x = event.clientX + padding;
     let y = event.clientY + padding + 10;
-
-    if (x + tooltipRect.width > window.innerWidth - 20) {
-        x = event.clientX - tooltipRect.width - padding;
-    }
-
-    if (y + tooltipRect.height > window.innerHeight - 20) {
-        y = event.clientY - tooltipRect.height - padding;
-    }
-
+    if (x + tooltipRect.width > window.innerWidth - 20) x = event.clientX - tooltipRect.width - padding;
+    if (y + tooltipRect.height > window.innerHeight - 20) y = event.clientY - tooltipRect.height - padding;
     if (x < 20) x = 20;
     if (y < 20) y = 20;
-
     tooltip.style.left = `${x}px`;
     tooltip.style.top = `${y}px`;
 }
@@ -807,39 +673,26 @@ function positionTooltip(event, tooltip) {
 function initializeCategoryFilters() {
     const container = document.getElementById('categoryFilters');
     if (!container) return;
-
     const categories = CONFIG.keybinds && CONFIG.keybinds.categories ? CONFIG.keybinds.categories : [];
-
-    // Clear and build category filters
     container.innerHTML = '';
-
     categories.forEach(category => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.dataset.category = category.id;
-        btn.innerHTML = `${category.icon} ${category.name}`;
+        btn.textContent = `${category.icon} ${category.name}`;
         btn.style.setProperty('--category-color', category.color);
-
         btn.addEventListener('click', () => filterByCategory(category.id));
         container.appendChild(btn);
     });
-
-    // "All" button listener
     const allBtn = document.querySelector('.filter-btn[data-category="all"]');
-    if (allBtn) {
-        allBtn.addEventListener('click', () => filterByCategory('all'));
-    }
+    if (allBtn) allBtn.addEventListener('click', () => filterByCategory('all'));
 }
 
 function filterByCategory(categoryId) {
-    const keys = document.querySelectorAll('.key');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-
-    filterBtns.forEach(btn => {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.category === categoryId);
     });
-
-    keys.forEach(key => {
+    document.querySelectorAll('.key').forEach(key => {
         if (categoryId === 'all') {
             key.classList.remove('filtered-out');
             if (key.classList.contains('has-action')) {
@@ -867,53 +720,32 @@ function initializeKeyboardControls() {
 }
 
 function handleKeyDown(event) {
-    const key = event.which || event.keyCode;
-
-    if (key === 32) { // Spacebar - Mute/Unmute
+    // Utilisation de event.key (moderne) — event.which/keyCode dépréciés
+    if (event.key === ' ') {
         event.preventDefault();
         toggleMute();
     }
 }
 
 function handleKeyUp(event) {
-    const key = event.which || event.keyCode;
-
-    switch (key) {
-        case 37: // Arrow Left - Previous song
-            previousSong();
-            break;
-        case 39: // Arrow Right - Next song
-            nextSong();
-            break;
-        case 38: // Arrow Up - Volume up
-            adjustVolume(VOLUME_STEP);
-            break;
-        case 40: // Arrow Down - Volume down
-            adjustVolume(-VOLUME_STEP);
-            break;
+    switch (event.key) {
+        case 'ArrowLeft':  previousSong(); break;
+        case 'ArrowRight': nextSong(); break;
+        case 'ArrowUp':    adjustVolume(VOLUME_STEP); break;
+        case 'ArrowDown':  adjustVolume(-VOLUME_STEP); break;
     }
 
-    // Highlight pressed key on virtual keyboard if visible
     if (state.isKeybindsVisible) {
         const keyMap = {
-            ' ': 'Space',
-            'Escape': 'Escape',
-            'Tab': 'Tab',
-            'Shift': 'Shift',
-            'Control': 'Ctrl',
-            'Alt': 'Alt',
-            'Enter': 'Enter',
-            'Backspace': 'Backspace',
-            'ArrowUp': 'ArrowUp',
-            'ArrowDown': 'ArrowDown',
-            'ArrowLeft': 'ArrowLeft',
-            'ArrowRight': 'ArrowRight'
+            ' ': 'Space', 'Escape': 'Escape', 'Tab': 'Tab',
+            'Shift': 'Shift', 'Control': 'Ctrl', 'Alt': 'Alt',
+            'Enter': 'Enter', 'Backspace': 'Backspace',
+            'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
+            'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight'
         };
-
         let keyId = event.key.toUpperCase();
         if (keyMap[event.key]) keyId = keyMap[event.key];
         if (event.key.startsWith('F') && !isNaN(event.key.slice(1))) keyId = event.key;
-
         const keyElement = document.querySelector(`.key[data-key="${keyId}"]`);
         if (keyElement) {
             keyElement.classList.add('active');
@@ -930,67 +762,53 @@ function getRandomInt(min, max) {
 }
 
 // ===============================================
-// STAFF CARD & SOCIAL BUTTONS MICRO-ANIMATIONS
+// STAFF CARDS ANIMATIONS (initialisées au DOMContentLoaded)
 // ===============================================
-document.querySelectorAll('.staff-card').forEach((card, index) => {
-    card.style.animationDelay = `${0.1 * index}s`;
-
-    card.addEventListener('mouseenter', () => {
-        card.style.transform = 'translateX(10px) scale(1.02)';
+function initializeStaffCards() {
+    document.querySelectorAll('.staff-card').forEach((card, index) => {
+        card.style.animationDelay = `${0.1 * index}s`;
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateX(10px) scale(1.02)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateX(0) scale(1)';
+        });
     });
+}
 
-    card.addEventListener('mouseleave', () => {
-        card.style.transform = 'translateX(0) scale(1)';
+// ===============================================
+// SOCIAL BUTTONS RIPPLE
+// ===============================================
+function initializeSocialButtons() {
+    document.querySelectorAll('.social-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            ripple.style.cssText = `
+                position: absolute;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            `;
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+            ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+            this.style.position = 'relative';
+            this.style.overflow = 'hidden';
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
     });
-});
+}
 
-document.querySelectorAll('.social-btn').forEach(btn => {
-    btn.addEventListener('click', function (e) {
-        const ripple = document.createElement('span');
-        ripple.style.cssText = `
-            position: absolute;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: ripple 0.6s linear;
-            pointer-events: none;
-        `;
-
-        const rect = this.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        ripple.style.width = ripple.style.height = `${size}px`;
-        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-
-        this.style.position = 'relative';
-        this.style.overflow = 'hidden';
-        this.appendChild(ripple);
-
-        setTimeout(() => ripple.remove(), 600);
-    });
-});
-
-// Dynamic Ripple CSS inject
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes ripple {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
-    .song-name {
-        transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-    .status-text {
-        transition: opacity 0.3s ease;
-    }
+// Dynamic CSS inject
+const _style = document.createElement('style');
+_style.textContent = `
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+    .song-name { transition: opacity 0.2s ease, transform 0.2s ease; }
+    .status-text { transition: opacity 0.3s ease; }
 `;
-document.head.appendChild(style);
-
-// ===============================================
-// CONSOLE BRANDING
-// ===============================================
-console.log('%c🎮 Loading Screen v2.0 (SPA Unified)', 'font-size: 24px; font-weight: bold; color: #6366f1;');
-console.log('%cModern Glassmorphism & Native Progress Events', 'font-size: 14px; color: #8b5cf6;');
-console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #22d3ee;');
+document.head.appendChild(_style);

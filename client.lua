@@ -1,24 +1,24 @@
 
-local spawn1 = false							
+local screenShutdown = false
 
-AddEventHandler("playerSpawned", function () 	-- Wait for player to spawn
-	if not spawn1 then
-		ShutdownLoadingScreenNui()				-- Close loading screen resource
-		spawn1 = true
-	end
+AddEventHandler("playerSpawned", function()
+    if not screenShutdown then
+        screenShutdown = true
+        ShutdownLoadingScreenNui()
+    end
 end)
 
 RegisterNetEvent('esx_loadingscreen:showTest', function()
-	SendNUIMessage({
-		action = 'showTest'
-	})
-	SetNuiFocus(true, true)
+    SendNUIMessage({
+        action = 'showTest'
+    })
+    SetNuiFocus(true, true)
 end)
 
 RegisterNUICallback('closeTest', function(data, cb)
-	SetNuiFocus(false, false)
-	SendNUIMessage({
-		action = 'hideTest'
-	})
-	cb('ok')
+    SetNuiFocus(false, false)
+    SendNUIMessage({
+        action = 'hideTest'
+    })
+    cb('ok')
 end)
