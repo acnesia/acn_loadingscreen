@@ -1,24 +1,22 @@
-
 local screenShutdown = false
 
-AddEventHandler("playerSpawned", function()
-    if not screenShutdown then
-        screenShutdown = true
-        ShutdownLoadingScreenNui()
-    end
+-- Fermeture du loading screen natif au premier spawn
+AddEventHandler('playerSpawned', function()
+    if screenShutdown then return end
+    screenShutdown = true
+    ShutdownLoadingScreenNui()
 end)
 
-RegisterNetEvent('esx_loadingscreen:showTest', function()
-    SendNUIMessage({
-        action = 'showTest'
-    })
+-- Ouverture de la NUI en jeu via /testload
+RegisterNetEvent('acn_loadingscreen:showTest')
+AddEventHandler('acn_loadingscreen:showTest', function()
+    SendNUIMessage({ action = 'showTest' })
     SetNuiFocus(true, true)
 end)
 
-RegisterNUICallback('closeTest', function(data, cb)
+-- Fermeture via le bouton 'Quitter le Test'
+RegisterNUICallback('closeTest', function(_, cb)
     SetNuiFocus(false, false)
-    SendNUIMessage({
-        action = 'hideTest'
-    })
-    cb('ok')
+    SendNUIMessage({ action = 'hideTest' })
+    cb({ ok = true })
 end)
