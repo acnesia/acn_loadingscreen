@@ -1,10 +1,9 @@
 fx_version 'cerulean'
-description "Loadingscreen script by BebikDEV"
 games { 'gta5' }
 lua54 "yes"
 
-author 'Bebik(digitalranger)'
-description 'Discord : https://discord.gg/4VwXy4aDBd'
+author 'Acnesia'
+description 'Loading Screen SPA - acn_loadingscreen'
 version '1.1.0'
 
 loadscreen 'index.html'
