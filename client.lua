@@ -7,22 +7,35 @@ local function closeLoadingScreen()
     ShutdownLoadingScreenNui()
 end
 
--- Fermeture du loading screen natif au premier spawn
-AddEventHandler('playerSpawned', function()
-    closeLoadingScreen()
-end)
-
--- Fallback : si playerSpawned ne fire pas (certains frameworks)
+-- Multichar : le jeu est prêt, on ferme le loading screen
+-- playerSpawned ne fire pas avec un système de sélection de personnage
 AddEventHandler('onClientGameTypeStart', function()
     CreateThread(function()
-        Wait(3000)
+        Wait(1000) -- laisse le temps au multichar de s'initialiser
         closeLoadingScreen()
     end)
 end)
 
--- Fallback ultime : timeout de sécurité après 15 secondes
+-- Fallback : playerSpawned (mode sans multichar ou spawn direct)
+AddEventHandler('playerSpawned', function()
+    closeLoadingScreen()
+end)
+
+-- Fallback ultime : timeout de sécurité après 20 secondes
 CreateThread(function()
-    Wait(15000)
+    Wait(20000)
+    closeLoadingScreen()
+end)
+
+-- Permet au multichar de fermer manuellement le loading screen via NUI message
+RegisterNUICallback('closeLoadingScreen', function(_, cb)
+    closeLoadingScreen()
+    cb({ ok = true })
+end)
+
+-- Permet aussi de le fermer via un event net (depuis le multichar server-side)
+RegisterNetEvent('acn_loadingscreen:close')
+AddEventHandler('acn_loadingscreen:close', function()
     closeLoadingScreen()
 end)
 
